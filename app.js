@@ -77,6 +77,8 @@ app.use('/', routes);
 // error handlers
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
+  console.log("!!error!!");
+  console.log(req);
   const err = new Error('Not Found');
   res.status(404);
   next(err);

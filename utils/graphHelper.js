@@ -19,11 +19,7 @@ function getTheItemFields(accessToken, contenturi, dict, res, callback) {
    .set('Authorization', 'Bearer ' + accessToken)
    .end((err, res) => {
     var jsonFormattedItemFieldsInfo = JSON.parse(res.text);
-    //console.log("**getTheItemField**");
-    // console.log(jsonFormattedItemFieldsInfo.fields);
     callback(err, jsonFormattedItemFieldsInfo.fields); 
-    //execute call back here
-    //callback(jsonFormattedItemFieldsInfo.fields)
    });
 }
 
@@ -32,7 +28,7 @@ function getTheItemFields(accessToken, contenturi, dict, res, callback) {
  * @param {string} accessToken The access token to send with the request.
  * @param {Function} callback
  */
-function getFilesMetaData(accessToken, callback) {
+function getFilesMetaData(accessToken, contentUri, callback) {
   request
    .get('https://graph.microsoft.com/v1.0/sites/microsoft.sharepoint.com,dc09680e-36f3-4162-ad41-5da49216ca9b,f8f26641-b58a-41ef-8ad8-f03e01aced55/lists/436260bc-bba7-4a12-91df-5a004155cdff/items?expand=allfields')
    .set('Authorization', 'Bearer ' + accessToken)
@@ -44,10 +40,7 @@ function getFilesMetaData(accessToken, callback) {
       var value = jsonFormattedTextResponse.value[i].id;
       dict[key]= value;
     }
-
-    // hard-coded the content uri. This will be updated soon.
-    var testContentUri = 'https://microsoft-my.sharepoint-df.com/:w:/p/nagaiton/EZLOnRflXsRPuu3t3JMq6zkBFBhHnaw2pO8Fn8jOGAUTqg?e=HsK1LA'
-    getTheItemFields(accessToken,testContentUri,dict,res, callback);
+    getTheItemFields(accessToken,contentUri,dict,res, callback);
   });
 }
 

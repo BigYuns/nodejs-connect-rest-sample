@@ -17,16 +17,27 @@ const router = express.Router();
 const graphHelper = require('../utils/graphHelper.js');
 const emailer = require('../utils/emailer.js');
 const passport = require('passport');
+var url = require('url');
 // ////const fs = require('fs');
 // ////const path = require('path');
+var g_cachedContentUri = "";
 
 // Get the home page.
 router.get('/', (req, res) => {
+  // save the contentUri query string to the global variable.
+  var q = url.parse(req.url, true);
+  var queryString = q.search;
+  // trim the query string symbol.
+  if(queryString[0]=='?')
+  {
+    g_cachedContentUri = queryString.substring(1);
+  }
+
   // check if user is authenticated
   if (!req.isAuthenticated()) {
     res.render('login');
   } else {
-    renderFieldsWrapper(req,res);
+    renderFieldsWrapper(req,res,g_cachedContentUri);
   }
 });
 
@@ -42,16 +53,16 @@ router.get('/login',
 router.get('/token',
   passport.authenticate('azuread-openidconnect', { failureRedirect: '/' }),
     (req, res) => {
-      renderFieldsWrapper(req,res);
+      renderFieldsWrapper(req,res,g_cachedContentUri);
     });
 
 router.get('/fields', (req, res) => {
   renderFields(req,res);
 });
 
-function renderFieldsWrapper(req,res)
+function renderFieldsWrapper(req,res,g_cachedContentUri)
 {
-  graphHelper.getFilesMetaData(req.user.accessToken, (err, fields) => {
+  graphHelper.getFilesMetaData(req.user.accessToken, g_cachedContentUri, (err, fields) => {
     if (!err) {
       renderFields(fields,res);
     } else {
