@@ -26,7 +26,7 @@ router.get('/', (req, res) => {
   if (!req.isAuthenticated()) {
     res.render('login');
   } else {
-    renderSendMail(req, res);
+    renderFieldsWrapper(req,res);
   }
 });
 
@@ -38,20 +38,34 @@ router.get('/login',
     });
 
 // Authentication callback.
-// After we have an access token, get user data and load the sendMail page.
+// After we have an access token, get user data and load the fields page.
 router.get('/token',
   passport.authenticate('azuread-openidconnect', { failureRedirect: '/' }),
     (req, res) => {
-      graphHelper.getUserData(req.user.accessToken, (err, user) => {
-        if (!err) {
-          req.user.profile.displayName = user.body.displayName;
-          req.user.profile.emails = [{ address: user.body.mail || user.body.userPrincipalName }];
-          renderSendMail(req, res);
-        } else {
-          renderError(err, res);
-        }
-      });
+      renderFieldsWrapper(req,res);
     });
+
+router.get('/fields', (req, res) => {
+  renderFields(req,res);
+});
+
+function renderFieldsWrapper(req,res)
+{
+  graphHelper.getFilesMetaData(req.user.accessToken, (err, fields) => {
+    if (!err) {
+      renderFields(fields,res);
+    } else {
+      renderError(err, res);
+    }
+  });
+}
+
+// Load the page to show all fields(attributes) of a file.
+function renderFields(fields,res) {
+  res.render('fields',{
+    fields : JSON.stringify(fields)
+  });
+}
 
 // Load the sendMail page.
 function renderSendMail(req, res) {

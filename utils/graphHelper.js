@@ -4,19 +4,51 @@
  */
 
 const request = require('superagent');
+/* create an empty dictionary for {key: contenturi, value: id_of_a_file}. 
+This is a hacky way of finding an item by id. 
+I chose to find an item by id because of the graph API.*/
+var dict = {};
+
+function getTheItemFields(accessToken, contenturi, dict, res, callback) {
+  //populate the dict
+  //getUserData: current version of popuating the dtaa
+  //look for the id 
+  var idOfTheItem = dict[contenturi]; //content uri should be unique
+  request
+   .get('https://graph.microsoft.com/v1.0/sites/microsoft.sharepoint.com,dc09680e-36f3-4162-ad41-5da49216ca9b,f8f26641-b58a-41ef-8ad8-f03e01aced55/lists/436260bc-bba7-4a12-91df-5a004155cdff/items/' + idOfTheItem)
+   .set('Authorization', 'Bearer ' + accessToken)
+   .end((err, res) => {
+    var jsonFormattedItemFieldsInfo = JSON.parse(res.text);
+    //console.log("**getTheItemField**");
+    // console.log(jsonFormattedItemFieldsInfo.fields);
+    callback(err, jsonFormattedItemFieldsInfo.fields); 
+    //execute call back here
+    //callback(jsonFormattedItemFieldsInfo.fields)
+   });
+}
 
 /**
  * Generates a GET request the user endpoint.
  * @param {string} accessToken The access token to send with the request.
  * @param {Function} callback
  */
-function getUserData(accessToken, callback) {
+function getFilesMetaData(accessToken, callback) {
   request
-   .get('https://graph.microsoft.com/beta/me')
+   .get('https://graph.microsoft.com/v1.0/sites/microsoft.sharepoint.com,dc09680e-36f3-4162-ad41-5da49216ca9b,f8f26641-b58a-41ef-8ad8-f03e01aced55/lists/436260bc-bba7-4a12-91df-5a004155cdff/items?expand=allfields')
    .set('Authorization', 'Bearer ' + accessToken)
    .end((err, res) => {
-     callback(err, res);
-   });
+    var jsonFormattedTextResponse = JSON.parse(res.text);
+    var numberOfItems = jsonFormattedTextResponse.value.length
+    for (i = 0; i < numberOfItems; i++) { 
+      var key = jsonFormattedTextResponse.value[i].fields.ContentUri;
+      var value = jsonFormattedTextResponse.value[i].id;
+      dict[key]= value;
+    }
+
+    // hard-coded the content uri. This will be updated soon.
+    var testContentUri = 'https://microsoft-my.sharepoint-df.com/:w:/p/nagaiton/EZLOnRflXsRPuu3t3JMq6zkBFBhHnaw2pO8Fn8jOGAUTqg?e=HsK1LA'
+    getTheItemFields(accessToken,testContentUri,dict,res, callback);
+  });
 }
 
 /**
@@ -100,7 +132,7 @@ function postSendMail(accessToken, message, callback) {
    });
 }
 
-exports.getUserData = getUserData;
+exports.getFilesMetaData = getFilesMetaData;
 exports.getProfilePhoto = getProfilePhoto;
 exports.uploadFile = uploadFile;
 exports.getSharingLink = getSharingLink;
